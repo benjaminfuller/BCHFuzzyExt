@@ -1,59 +1,7 @@
-// sketch.cpp
-//
-// C++ code by Kevin Harmon and Leonid Reyzin
-//
-// Finds the PinSketch (BCH-based secure sketch) of an input set.
-//
-// See pinsketch.txt for detailed documentation
-// This code and explanatory notes
-// are hosted at http://www.cs.bu.edu/~reyzin/code/fuzzy.html
 
-//
-
-#include "pinsketch.h"
+#include "bchsketch.h"
 #include <cassert>
 
-void initializeGF2K(long m){
-	GF2X irrP;
-	BuildSparseIrred(irrP, m); // fix irreducible poly of deg m over GF(2)
-	GF2E::init(irrP); // fix field as GF(2^m)
-}
-
-GF2E findPrimitiveElement(vec_GF2E & element_vector, long m ){
-	element_vector.SetLength((2<<(m-1))-1);
-	long found=0;
-	GF2E xx;
-	do
-	{
-		xx = NTL::random_GF2E();
-		found=1;
-		element_vector[(2<<(m-1))-2] = power(xx,0);
-		if(IsZero(xx)){
-			continue;
-		}
-		for(int i=0; i< (2<<m-1)-2;i++){
-			element_vector[i] = power(xx,i);
-			if(i>=1 && IsOne(element_vector[i])){
-				found=0;
-				break;
-			}
-		}
-		cout<<"Value of found "<<found<<endl;
-		cout<<"Element"<<element_vector<<endl;
-		
-	} while (found==0);	
-	return xx;
-}
-
-GF2E evaluatePolyAtElement(const vec_GF2 & polynomial, const GF2E & point){
-	GF2E running_sum = GF2E(0);
-	for(long i=0;i<polynomial.length();i++){
-		if(IsOne(polynomial[i])){
-			running_sum= running_sum+power(point,i);
-		}
-	}
-	return running_sum;
-}
 
 int main(int argc, char** argv)
 {
@@ -84,21 +32,31 @@ int main(int argc, char** argv)
 	ReadBioInput(vect_i, infile, m);
 	infile.close();
 	initializeGF2K(m);
-	
 	GF2E generator;
 	vec_GF2E genToPow;
 	generator = findPrimitiveElement(genToPow,m);
+	// cout<<"Gen to power "<<genToPow<<endl;
 	assert(!IsZero(generator));
-	cout<<"Gen to Pow"<<genToPow<<endl;
-	cout<<"Generator"<<generator<<endl;
-	for(long i =0;i<d;i++){
-		GF2E gi = power(generator,i);
-		GF2E syn_i =evaluatePolyAtElement(vect_i, power(generator,i));
-		cout<<"Syndrome "<<i<<" "<<syn_i<<endl;
-	}
-	
 	vec_GF2E syndrome;
+	syndrome.SetLength(d);
+	vec_GF2E syndrome2;
+	syndrome2.SetLength(d);
+	vec_GF2 vect_i_test;
+	vect_i_test.SetLength(vect_i.length());
+	vect_i_test.put(1,1);
+	vec_GF2 vect_i_error =vect_i + vect_i_test;
+	// cout<<vect_i_test<<endl;
+	BCHSyndromeCompute(syndrome,vect_i,d, generator);
+	BCHSyndromeCompute(syndrome2,vect_i_error,d, generator);
+	vec_GF2E final_syndrome;
+	final_syndrome.SetLength(d);
+	final_syndrome = syndrome+syndrome2;
+	vec_GF2 decoded_value;
+	BCHSyndromeDecode(decoded_value,final_syndrome,d, genToPow);
+	vec_GF2 corrected_value = decoded_value+ vect_i_error;
+	assert(corrected_value== vect_i);
 
+	cout<<"Test passed successfully"<<endl;
 // // read in set  
 // 	vec_GF2 vector;
 // 	// vec_GF2E ss;

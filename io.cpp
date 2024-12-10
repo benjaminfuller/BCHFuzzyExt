@@ -11,7 +11,7 @@
 //
 
 #include <bits/stdc++.h>
-#include "pinsketch.h"
+#include "bchsketch.h"
 using namespace std;
 
 /***************** Converting integer to elements of GF(2^e) and back **************************/
@@ -67,26 +67,23 @@ void ReadBioInput(vec_GF2 & vect_i, istream &infile, unsigned long & m)
 		bin_vec.push_back(r);
 		length++;
 	}
-	cout<<bin_vec.size()<<endl;
 	unsigned long temp_n=0;
 	while(temp_n<length){
 		m++;
-		temp_n = (2<<m) -1;
+		temp_n = (2<<m-1) -1;
 	}
-	cout<<m<<", "<<temp_n<<endl;
 	
 	long n = temp_n;
 	while(bin_vec.size()<n){
 		bin_vec.push_back(0);
 	}
-	cout<<bin_vec.size()<<endl;
+
 	vect_i.SetLength(n);
 	for(int i=0; i<n;i++){
 		GF2 temp;
 		temp = bin_vec[i];
 		vect_i.put(i,temp);
 	}
-	cout<<vect_i<<endl;
 }
 
 
@@ -114,7 +111,6 @@ void ReadDFile(long &d, istream &infile)
 			case 't': infile >> t; break;
 		}
 	}
-	cout<<t<<endl;
 	if (infile.eof() || t<=0)
 	{
 		cerr << "Bad input format!" << endl;
