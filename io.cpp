@@ -1,14 +1,3 @@
-// io.cpp
-//
-// C++ code by Kevin Harmon and Leonid Reyzin
-//
-// Input/output routines for PinSketch
-// (BCH-based secure sketches)
-//
-// See pinsketch.txt for detailed documentation
-// This code and explanatory notes
-// are hosted at http://www.cs.bu.edu/~reyzin/code/fuzzy.html
-//
 
 #include <bits/stdc++.h>
 #include "bchsketch.h"
@@ -36,13 +25,13 @@ void BinElemToNum(ZZ & a, const GF2E & e) {
 // generates the field.
 static 
 void NumToBinElem(GF2E & e, const ZZ & a, unsigned long m) {
-        GF2X g;
+    GF2X g;
 	long numBytes=NumBytes(a);
 	unsigned char * buffer = new unsigned char[numBytes];
 	BytesFromZZ(buffer, a, numBytes);
 	GF2XFromBytes(g, buffer, numBytes);
 	delete [] buffer;
-       	conv (e, g); // Convert from polynomial to field element
+    conv (e, g); // Convert from polynomial to field element
 }
 
 
@@ -90,8 +79,8 @@ void ReadBioInput(vec_GF2 & vect_i, istream &infile, unsigned long & m)
 
 // Reads in the field size m and the desired error-tolerance t from
 // the input file, where they are assumed to be present in the format
-// t=<integer> m=<integer> (no spaces around '=' are allowed)
-// Returns m and the minimum distance of the code d=2t+1
+// t=<integer>(no spaces around '=' are allowed)
+// Returns  the minimum distance of the code d=2t+1
 void ReadDFile(long &d, istream &infile)
 {
 	long t = 0;  // t = max set diff tolerated
@@ -121,67 +110,4 @@ void ReadDFile(long &d, istream &infile)
 
 	return;
 }
-
-// Reads in from the input file (presumably one that conains
-// a secure sketch output by OutputSS)
-// the field size m, the minimum distance d of the code,
-// and the irreducible polynomial over GF(2)
-// used for represending the field GF(2^m)
-void ReadSSParams(long &m, long &d, GF2X &irrP, istream & infile)
-{
-	infile >> d >> m >> irrP;
-
-	if (infile.eof() || d<=0 || m<=0)
-	{
-		cerr << "Bad input format!" << endl;
-		exit(-1);
-	}
-
-	return;
-}
-
-// Reads secure sketch from a file.  The secure
-// sketch is assumed to be (d-1)/2 values
-// in GF(2^m).  Assumes GF(2^m) was already
-// constructed via NTL's ConstructField
-// If the file was produced using OutputSS, assumes
-// ReadSSParams already read the parameters contained
-// at the beginning of the file
-void ReadSS(vec_GF2E & ss, istream &infile, long d)
-{
-	ss.SetLength((d-1)/2);
-	for (long i = 0; i < (d-1)/2; ++i)
-		infile >> ss[i]; // uses NTL I/O routine
-}
-
- 
-// Outputs the set difference by converting elements of GF2E back
-// to the more human-readable integer representation
-void OutputSetDifference(ostream &outfile, const vec_GF2E & setDifference)
-{
-        ZZ a;
-	int i;
-
-        outfile << "Set Difference = {\n";
-        for (i = 0; i < setDifference.length(); ++i) {
-	  BinElemToNum(a, setDifference[i]);
-          outfile <<a<<endl; // print output in integer form       
-	}
-        outfile << "}\n";
-	
-}
-
-// Output secure sketch into a file: first the distance d
-// (tolerated errors are t=2d-1), then the degree m of the field,
-// then the (d-1)/2 elements of the secure sketch
-void OutputSS(ostream &outfile, const vec_GF2E & ss, long d, const GF2X & irrP)
-{
-	// record the parameters that were used
-	outfile << d << " " << GF2E::degree() << " " << irrP << " " << endl;
-
-	// now record the values themselves
-	for (long j = 0; j < (d-1)/2; ++j)
-	  outfile << ss[j] << ((j == (d-3)/2) ? "\n" : " ");
-}
-
 
