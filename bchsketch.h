@@ -6,6 +6,7 @@
 #include <NTL/vec_ZZ.h>
 #include <NTL/GF2XFactoring.h>
 #include <NTL/GF2EXFactoring.h>
+#include <vector>
 
 using namespace std; // may be needed to compile on some platforms; may need to be removed on others
 
@@ -21,8 +22,11 @@ bool BCHSyndromeDecode(vec_GF2 & translated_errors, const vec_GF2E & syndrome, l
 
 /************************ Helper Functions for Polynomial ***************/
 void initializeGF2K(long m);
-GF2E initializeGF2EforBCH(vec_GF2E & powToElement, long m );
+GF2E initializeGF2EforBCH(vector<vec_GF2> & powerToMinPoly, vec_GF2E & powToElement, long m );
 GF2E evaluatePolyAtElement(const vec_GF2 & polynomial, const GF2E & point);
 void translateErrors(vec_GF2 & errors, vec_GF2E & located_errors, const vec_GF2E& powToElement);
+
+void multiplyVecGF2(vec_GF2 & result, const vec_GF2 & a, const vec_GF2 & b);
+void findGeneratorPolynomial(vec_GF2 & result, vector<vec_GF2> powerToMinPoly, long d);
 
 #endif

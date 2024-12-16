@@ -3,14 +3,37 @@
 #include "bchsketch.h"
 #include <math.h>
 #include <vector>
+#include <assert.h>
 
 void initializeGF2K(long m){
 	GF2X irrP;
 	BuildSparseIrred(irrP, m); // fix irreducible poly of deg m over GF(2)
-	cout<<"Irreducible "<<irrP<<endl;
 	GF2E::init(irrP); // fix field as GF(2^m)
 }
 
+void multiplyVecGF2(vec_GF2 & result, const vec_GF2 & a, const vec_GF2 & b){
+	clear(result);
+	vec_GF2 temp;
+	vec_GF2 temp2=b;
+	cout<<a<<" "<<b<<endl;
+	for(long i=0;i<=a.length();i++){
+		if(a.get(i)==1){
+			if(temp.length()<result.length()){
+				temp.SetLength(result.length());
+			}
+			if(temp2.length()<result.length()){
+			temp2.SetLength(result.length());
+			}
+			assert(result.length()>=temp.length());
+			assert(result.length()>=temp2.length());
+			shift(temp,temp2,i);
+			cout<<temp.length()<<endl;
+			cout<<"Temp to add "<<temp<<endl;
+			result+=temp;
+		}
+	}
+	cout<<"Result "<<result<<endl;
+}
 void vecGF2fromLong(vec_GF2 & polynomial, long value){
 	if(value==0){
 		polynomial.SetLength(1);
@@ -31,6 +54,42 @@ void vecGF2fromLong(vec_GF2 & polynomial, long value){
 	}
 }
 
+void findGeneratorPolynomial(vec_GF2 & result, vector<vec_GF2> powerToMinPoly, long d){
+	cout<<powerToMinPoly[0]<<" "<<powerToMinPoly[1]<<endl;
+	vector<bool> isFresh = {0};
+	cout<<"Find generator poly"<<endl;
+	long lengthResult=0;
+	for(long i=0; i<powerToMinPoly.size();i++){
+		cout<<powerToMinPoly[i]<<endl;
+		isFresh[i]=1;
+		for(long j=0;j<i;j++){
+			if (powerToMinPoly[j]==powerToMinPoly[i])
+			{
+				isFresh[i]=0;
+			}
+		}
+	}
+	cout<<"Min poly to include"<<endl;
+	for(long i=0;i<d;i++){
+		if(isFresh[i]==1){
+			cout<<powerToMinPoly[i]<<endl;
+			lengthResult+=powerToMinPoly[i].length();
+
+		}
+	}
+	result=powerToMinPoly[0];
+	result.SetLength(lengthResult);
+	vec_GF2 tempResult = result;
+	for(long i=1;i<d;i++){
+		if(isFresh[i]==1){
+			multiplyVecGF2(tempResult, result, powerToMinPoly[i]);
+			result = tempResult;
+		}
+	}
+	cout<<"Size of generating poly "<<result<<endl;
+	
+}
+
 void findMinimumPolynomial(vec_GF2 & minimumPolynomial, const GF2E & generatorPower, long m){
 	GF2E result;
 	for(long i=1; i< (2<<m);i++){
@@ -46,7 +105,7 @@ void findMinimumPolynomial(vec_GF2 & minimumPolynomial, const GF2E & generatorPo
 // This vector should cover all of the field except for 0
 // TODO return a second vector that is the inverse mapping
 // Had issues with equality when using an unordered set
-GF2E initializeGF2EforBCH(vec_GF2E & powToElement, long m ){
+GF2E initializeGF2EforBCH(vector<vec_GF2> & powerToMinPoly, vec_GF2E & powToElement, long m ){
 	powToElement.SetLength((2<<(m-1))-1);
 	long found=0;
 	GF2E xx;
@@ -68,16 +127,13 @@ GF2E initializeGF2EforBCH(vec_GF2E & powToElement, long m ){
 			}
 		}
 	} while (found==0);	
-	vector<vec_GF2> powerToMinPoly;
 	//Now we're going to compute minimum polynomials for each power
 	vec_GF2 minimumPolynomial;
 	for(int i=0; i< (2<<m-1)-1;i++){
 		findMinimumPolynomial(minimumPolynomial, powToElement[i], m);
 		powerToMinPoly.push_back(minimumPolynomial);
 	}
-	for(int i=0; i< (2<<m-1)-1;i++){
-		cout<<powerToMinPoly[i]<<endl;
-	}
+	cout<<powerToMinPoly.size()<<endl;
 	return xx;
 }
 
