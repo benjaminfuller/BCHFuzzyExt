@@ -1,15 +1,52 @@
 
 
 #include "bchsketch.h"
+#include <math.h>
+#include <vector>
 
 void initializeGF2K(long m){
 	GF2X irrP;
 	BuildSparseIrred(irrP, m); // fix irreducible poly of deg m over GF(2)
+	cout<<"Irreducible "<<irrP<<endl;
 	GF2E::init(irrP); // fix field as GF(2^m)
 }
 
-//TODO: return an unordered map elementToPow to make lookup of the errors more efficient
-GF2E findPrimitiveElement(vec_GF2E & powToElement, long m ){
+void vecGF2fromLong(vec_GF2 & polynomial, long value){
+	if(value==0){
+		polynomial.SetLength(1);
+		clear(polynomial);
+		return;
+	}
+	long digits = floor(log2(value))+1;
+	polynomial.SetLength(digits);
+	clear(polynomial);
+	for(long i=0;i<=digits;i++)
+	{
+		if (((value>>i) %2)==1){
+			polynomial.put(i, 1);
+		}
+		else{
+			polynomial.put(i, 0);
+		}
+	}
+}
+
+void findMinimumPolynomial(vec_GF2 & minimumPolynomial, const GF2E & generatorPower, long m){
+	GF2E result;
+	for(long i=1; i< (2<<m);i++){
+		vecGF2fromLong(minimumPolynomial,i);
+		result = evaluatePolyAtElement(minimumPolynomial, generatorPower);
+		if(IsZero(result)){
+			return;
+		}
+	}
+}
+//This takes the BCH code and finds a primitive element
+// It also creates a vector mapping i -> g^i for the found generator
+// This vector should cover all of the field except for 0
+// TODO return a second vector that is the inverse mapping
+// Had issues with equality when using an unordered set
+GF2E initializeGF2EforBCH(vec_GF2E & powToElement, long m ){
 	powToElement.SetLength((2<<(m-1))-1);
 	long found=0;
 	GF2E xx;
@@ -31,8 +68,20 @@ GF2E findPrimitiveElement(vec_GF2E & powToElement, long m ){
 			}
 		}
 	} while (found==0);	
+	vector<vec_GF2> powerToMinPoly;
+	//Now we're going to compute minimum polynomials for each power
+	vec_GF2 minimumPolynomial;
+	for(int i=0; i< (2<<m-1)-1;i++){
+		findMinimumPolynomial(minimumPolynomial, powToElement[i], m);
+		powerToMinPoly.push_back(minimumPolynomial);
+	}
+	for(int i=0; i< (2<<m-1)-1;i++){
+		cout<<powerToMinPoly[i]<<endl;
+	}
 	return xx;
 }
+
+
 
 GF2E evaluatePolyAtElement(const vec_GF2 & polynomial, const GF2E & point){
 	GF2E running_sum = GF2E(0);

@@ -28,33 +28,32 @@ int main(int argc, char** argv)
         }
 	ReadDFile(d, infile);
 	unsigned int long m =0;
-	vec_GF2 vect_i;
-	ReadBioInput(vect_i, infile, m);
+	vec_GF2 original_bio;
+	ReadBioInput(original_bio, infile, m);
 	infile.close();
 	initializeGF2K(m);
 	GF2E generator;
 	vec_GF2E genToPow;
-	generator = findPrimitiveElement(genToPow,m);
-	// cout<<"Gen to power "<<genToPow<<endl;
+	generator = initializeGF2EforBCH(genToPow,m);
 	assert(!IsZero(generator));
 	vec_GF2E syndrome;
 	syndrome.SetLength(d);
 	vec_GF2E syndrome2;
 	syndrome2.SetLength(d);
-	vec_GF2 vect_i_test;
-	vect_i_test.SetLength(vect_i.length());
-	vect_i_test.put(1,1);
-	vec_GF2 vect_i_error =vect_i + vect_i_test;
+	vec_GF2 error_vect;
+	error_vect.SetLength(original_bio.length());
+	error_vect.put(1,1);
+	vec_GF2 noisy_bio =original_bio + error_vect;
 	// cout<<vect_i_test<<endl;
-	BCHSyndromeCompute(syndrome,vect_i,d, generator);
-	BCHSyndromeCompute(syndrome2,vect_i_error,d, generator);
+	BCHSyndromeCompute(syndrome,original_bio,d, generator);
+	BCHSyndromeCompute(syndrome2,noisy_bio,d, generator);
 	vec_GF2E final_syndrome;
 	final_syndrome.SetLength(d);
 	final_syndrome = syndrome+syndrome2;
 	vec_GF2 decoded_value;
 	BCHSyndromeDecode(decoded_value,final_syndrome,d, genToPow);
-	vec_GF2 corrected_value = decoded_value+ vect_i_error;
-	assert(corrected_value== vect_i);
+	vec_GF2 corrected_value = decoded_value+ noisy_bio;
+	assert(corrected_value== original_bio);
 
 	cout<<"Test passed successfully"<<endl;
 // // read in set  

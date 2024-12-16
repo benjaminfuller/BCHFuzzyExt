@@ -21,7 +21,7 @@ bool BCHSyndromeDecode(vec_GF2 & translated_errors, const vec_GF2E & syndrome, l
 
 /************************ Helper Functions for Polynomial ***************/
 void initializeGF2K(long m);
-GF2E findPrimitiveElement(vec_GF2E & powToElement, long m );
+GF2E initializeGF2EforBCH(vec_GF2E & powToElement, long m );
 GF2E evaluatePolyAtElement(const vec_GF2 & polynomial, const GF2E & point);
 void translateErrors(vec_GF2 & errors, vec_GF2E & located_errors, const vec_GF2E& powToElement);
 
